@@ -1,0 +1,81 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loanwise | Loan calculator with full payment schedule</title>
+<meta name="description" content="See the monthly payment, total interest and a full payment schedule. Compare reducing balance with flat rate, and test extra payments. Offline.">
+<meta property="og:title" content="Loanwise"><meta property="og:description" content="Loan calculator: schedule, total interest, flat vs reducing rate, extra payments."><meta property="og:image" content="og.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%231f4d3a'/%3E%3Cpath d='M20 70L40 48L55 60L82 28' stroke='%23e8c872' stroke-width='9' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{--g:#1f4d3a;--gold:#c9a24b;--cream:#f7f2e4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:#1d2b24;font:16px/1.5 Georgia,"Times New Roman",serif}
+header{background:var(--g);color:var(--cream);padding:26px 20px;border-bottom:6px solid var(--gold)}
+header div{max-width:1000px;margin:0 auto}
+h1{margin:0;font-size:38px;letter-spacing:-1px}h1 em{color:var(--gold)}
+header p{margin:4px 0 0;opacity:.8;font-family:system-ui,sans-serif;font-size:14px}
+.w{max-width:1000px;margin:0 auto;padding:22px 20px 60px;display:grid;grid-template-columns:320px 1fr;gap:22px;align-items:start}
+@media(max-width:820px){.w{grid-template-columns:1fr}}
+.card{background:#fffdf6;border:1px solid #d9cfae;border-radius:6px;padding:18px}
+label{display:block;font:600 12px system-ui,sans-serif;text-transform:uppercase;letter-spacing:1px;color:#5b6b61;margin:12px 0 4px}
+input,select{width:100%;padding:9px 10px;border:1px solid #cdbf93;border-radius:4px;font:17px Georgia,serif;background:#fff;color:#1d2b24}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.big{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:600px){.big{grid-template-columns:1fr}}
+.k{border-top:4px solid var(--gold);background:#fffdf6;padding:12px 14px;border-radius:0 0 6px 6px;border-left:1px solid #d9cfae;border-right:1px solid #d9cfae;border-bottom:1px solid #d9cfae}
+.k small{display:block;font:600 11px system-ui,sans-serif;text-transform:uppercase;letter-spacing:1px;color:#5b6b61}
+.k b{font-size:28px;color:var(--g);font-variant-numeric:tabular-nums}
+.note{font:14px system-ui,sans-serif;background:#eef5ef;border-left:4px solid var(--g);padding:10px 14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.chart{height:150px;display:flex;align-items:flex-end;gap:3px;margin:10px 0 4px}
+.chart div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:2px}
+.chart i{display:block}.p{background:var(--g)}.in{background:var(--gold)}
+.leg{font:12px system-ui,sans-serif;color:#5b6b61}.leg b{display:inline-block;width:10px;height:10px;margin:0 4px 0 10px}
+.tw{max-height:340px;overflow:auto;border:1px solid #d9cfae;border-radius:6px;margin-top:10px}
+table{border-collapse:collapse;width:100%;font:14px system-ui,sans-serif;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:var(--g);color:var(--cream);padding:8px;text-align:right}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid #eee5c6}th:first-child,td:first-child{text-align:left}
+button{font:600 14px system-ui,sans-serif;background:var(--g);color:var(--cream);border:0;border-radius:4px;padding:8px 14px;cursor:pointer;margin-top:10px}
+h2{font-size:20px;margin:18px 0 0}
+</style></head><body>
+<header><div><h1>Loan<em>wise</em></h1><p>Know what a loan really costs before you sign. Monthly payment, total interest, full schedule.</p></div></header>
+<div class="w">
+<div class="card">
+ <label>Loan amount</label><input id="amt" type="number" value="500000" min="0">
+ <div class="two"><div><label>Annual rate %</label><input id="rate" type="number" value="18" step="0.1" min="0"></div><div><label>Term</label><input id="term" type="number" value="5" min="1"></div></div>
+ <div class="two"><div><label>Term unit</label><select id="unit"><option value="12" selected>Years</option><option value="1">Months</option></select></div><div><label>Currency</label><select id="cur"><option>EGP</option><option>USD</option><option>SAR</option><option>EUR</option></select></div></div>
+ <label>Rate type</label><select id="type"><option value="red">Reducing balance (standard)</option><option value="flat">Flat rate</option></select>
+ <label>Extra payment each month</label><input id="extra" type="number" value="0" min="0">
+ <button onclick="csv()">Download schedule CSV</button>
+</div>
+<div>
+ <div class="big"><div class="k"><small>Monthly payment</small><b id="mp">-</b></div><div class="k"><small>Total interest</small><b id="ti">-</b></div><div class="k"><small>Total paid</small><b id="tp">-</b></div></div>
+ <p class="note" id="note"></p>
+ <div class="card"><b>Principal vs interest each month</b><div class="chart" id="ch"></div><div class="leg"><b class="p"></b>Principal<b class="in"></b>Interest</div>
+ <h2>Payment schedule</h2><div class="tw"><table><thead><tr><th>#</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead><tbody id="tb"></tbody></table></div></div>
+</div></div>
+<script>
+const $=s=>document.querySelector(s);let S=[];
+const f=n=>n.toLocaleString('en',{maximumFractionDigits:0});
+function sched(P,r,n,type,extra){
+ const rows=[];let bal=P,m;
+ if(type==='flat'){const tot=P*(1+r*n/12);m=tot/n;const pr=P/n,ip=m-pr;for(let i=1;i<=n;i++){const e=Math.min(extra,P-pr*i+pr);bal=Math.max(0,bal-pr);rows.push({i,pay:m,pr,int:ip,bal});}
+  return {rows,m};}
+ const i0=r/12;m=i0?P*i0/(1-Math.pow(1+i0,-n)):P/n;
+ for(let i=1;i<=n&&bal>0.005;i++){const int=bal*i0;let pr=m-int+extra;if(pr>bal)pr=bal;bal-=pr;rows.push({i,pay:pr+int,pr,int,bal:Math.max(0,bal)})}
+ return {rows,m};
+}
+function run(){
+ const P=+$('#amt').value||0,r=(+$('#rate').value||0)/100,n=Math.max(1,Math.round((+$('#term').value||1)*+$('#unit').value)),ex=+$('#extra').value||0,type=$('#type').value,c=$('#cur').value;
+ const a=sched(P,r,n,type,ex);S=a.rows;const ti=S.reduce((s,x)=>s+x.int,0),tp=S.reduce((s,x)=>s+x.pay,0);
+ $('#mp').textContent=f(a.m+(type==='red'?ex:0))+' '+c;$('#ti').textContent=f(ti)+' '+c;$('#tp').textContent=f(tp)+' '+c;
+ const base=sched(P,r,n,type,0),bi=base.rows.reduce((s,x)=>s+x.int,0);
+ let note=`You pay ${(ti/P*100||0).toFixed(1)}% of the loan on top as interest.`;
+ if(type==='red'&&ex>0)note+=` With the extra payment you finish ${n-S.length} months early and save ${f(bi-ti)} ${c} in interest.`;
+ if(type==='flat'&&r>0){const i0=r/12;let lo=0,hi=5;for(let k=0;k<60;k++){const mid=(lo+hi)/2,pm=mid?P*mid/(1-Math.pow(1+mid,-n)):P/n;if(pm<a.m)lo=mid;else hi=mid}note+=` A flat rate of ${(r*100).toFixed(1)}% is the same as about ${(lo*12*100).toFixed(1)}% on a reducing balance, so compare offers on the reducing rate.`}
+ $('#note').textContent=note;
+ const mx=Math.max(...S.map(x=>x.pay));
+ const step=Math.ceil(S.length/90);$('#ch').innerHTML=S.filter((_,i)=>i%step===0).map(x=>`<div title="Month ${x.i}"><i class="in" style="height:${x.int/mx*150}px"></i><i class="p" style="height:${x.pr/mx*150}px"></i></div>`).join('');
+ $('#tb').innerHTML=S.map(x=>`<tr><td>${x.i}</td><td>${f(x.pay)}</td><td>${f(x.pr)}</td><td>${f(x.int)}</td><td>${f(x.bal)}</td></tr>`).join('');
+}
+function csv(){const t='month,payment,principal,interest,balance\n'+S.map(x=>[x.i,x.pay,x.pr,x.int,x.bal].map(v=>typeof v==='number'?v.toFixed(2):v).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='schedule.csv';a.click()}
+document.querySelectorAll('input,select').forEach(e=>e.oninput=run);
+if(location.search.includes('demo=1'))$('#extra').value=2000;
+run();
+</script></body></html>
